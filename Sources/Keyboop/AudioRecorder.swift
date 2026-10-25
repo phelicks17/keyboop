@@ -52,6 +52,7 @@ final class AudioRecorder: NSObject {
     private var nonZeroSeen = false            // под lock
     private var levelFrameAcc = 0              // троттлинг уровня по кадрам (только sampleQueue)
     private var capturing = false              // реально ли пишем в samples (vs тёплый холостой ход)
+    private var boost: Float = 1               // цифровое усиление этой записи (InputBoost), под lock
     private var warmRelease: DispatchWorkItem?
     private var warmSeconds: Double { Double(AppSettings.shared.voiceWarmSeconds) }  // длина «тёплого окна»
 
@@ -99,7 +100,10 @@ final class AudioRecorder: NSObject {
 
     func start() throws {
         warmRelease?.cancel(); warmRelease = nil
-        lock.lock(); samples.removeAll(keepingCapacity: true); loggedInput = false; firstBufferSeen = false; nonZeroSeen = false; lock.unlock()
+        // Усиление читаем один раз на запись, а не на каждый буфер: ползунок, сдвинутый посреди
+        // диктовки, не должен ломать громкость на полуслове.
+        let gain = Float(AppSettings.shared.voiceInputBoost) / 100
+        lock.lock(); samples.removeAll(keepingCapacity: true); loggedInput = false; firstBufferSeen = false; nonZeroSeen = false; boost = gain; lock.unlock()
         // Тёплое окно — но с ПРОВЕРКОЙ АКТУАЛЬНОСТИ: смена микрофона в меню/настройках ничего не
         // постит, поэтому тёплая сессия могла быть собрана на другом устройстве. Сравнение двух
         // строк — ноль обращений к CoreAudio на горячем пути (регресс 0.2.53 не повторяем).
@@ -477,7 +481,13 @@ extension AudioRecorder: AVCaptureAudioDataOutputSampleBufferDelegate {
                 if deadStrikes != 0 { deadStrikes = 0 }
             }           // вход реально живой (а не пустой поток)
             guard capturing else { lock.unlock(); return }   // тёплый холостой ход: отбрасываем молча
-            let chunk = Array(UnsafeBufferPointer(start: ch, count: n))
+            var chunk = Array(UnsafeBufferPointer(start: ch, count: n))
+            if boost != 1 {
+                // Усиливаем ДО всех потребителей: запись, поток, черновик и уровень на плашке видят
+                // одно и то же. nonZeroSeen выше считан по сырому звуку, ему усиление не нужно.
+                InputBoost.apply(&chunk, gain: boost)
+                vDSP_rmsqv(chunk, 1, &rms, vDSP_Length(n))
+            }
             samples.append(contentsOf: chunk)
             let cb = _onChunk, lv = _onLevel, draft = _onDraft
             let logNow = !loggedInput

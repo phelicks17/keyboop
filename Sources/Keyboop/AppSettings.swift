@@ -627,6 +627,12 @@ final class AppSettings {
         get { d.object(forKey: "voiceMicGainLevel") == nil ? 90 : max(10, min(100, d.integer(forKey: "voiceMicGainLevel"))) }
         set { d.set(max(10, min(100, newValue)), forKey: "voiceMicGainLevel") }
     }
+    /// Цифровое усиление записи диктовки сверх системного уровня, в процентах (`InputBoost`).
+    /// 100 по умолчанию — то есть выключено: запись идёт ровно такой, как её отдал микрофон.
+    var voiceInputBoost: Int {
+        get { d.object(forKey: "voiceInputBoost") == nil ? 100 : max(100, min(InputBoost.maxPercent, d.integer(forKey: "voiceInputBoost"))) }
+        set { d.set(max(100, min(InputBoost.maxPercent, newValue)), forKey: "voiceInputBoost") }
+    }
     /// Потолок приглушения. Выше него ползунок не ходит, и это осознанно: убавить со ста процентов
     /// до девяноста означает не убавить ничего. 77 выбрано автором 30.07 как самое большое число,
     /// которое ещё честно называется «тише», и потому что две семёрки приятно смотрятся.

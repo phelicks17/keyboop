@@ -3555,6 +3555,10 @@ final class DetailVC: NSViewController {
                  ? [controlRow(L10n.t("voice.micGainLevel"), micGainLevelControl(),
                                help: L10n.t("voice.micGainLevelHelp"), key: "voice.micGainLevel")]
                  : []) + [
+                // Усиление сверх 100% видно всегда: оно не зависит ни от переключателя выше, ни от
+                // того, умеет ли микрофон системный уровень (у «уровнем не управляет» оно и нужнее).
+                controlRow(L10n.t("voice.inputBoost"), inputBoostControl(),
+                           help: L10n.t("voice.inputBoostHelp"), key: "voice.inputBoost"),
                 buttonRow([soundSettingsLink()]),
             ]),
             group(6),
@@ -4702,6 +4706,29 @@ final class DetailVC: NSViewController {
         let v = Int(s.doubleValue.rounded())
         settings.voiceMicGainLevel = v
         micGainValueLabel?.stringValue = "\(v)%"
+    }
+    private weak var inputBoostValueLabel: NSTextField?
+    private func inputBoostControl() -> NSView {
+        let sl = NSSlider(value: Double(settings.voiceInputBoost), minValue: 100, maxValue: Double(InputBoost.maxPercent),
+                          target: self, action: #selector(inputBoostChanged(_:)))
+        sl.controlSize = .small
+        sl.widthAnchor.constraint(equalToConstant: 130).isActive = true
+        let label = NSTextField(labelWithString: inputBoostText(settings.voiceInputBoost))
+        label.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
+        label.textColor = .secondaryLabelColor
+        label.alignment = .right
+        label.widthAnchor.constraint(equalToConstant: 58).isActive = true
+        inputBoostValueLabel = label
+        let row = NSStackView(views: [sl, label])
+        row.orientation = .horizontal; row.spacing = 8; row.alignment = .centerY
+        return row
+    }
+    /// 100% — это «выключено», поэтому словом, как ноль у приглушения.
+    private func inputBoostText(_ v: Int) -> String { v == 100 ? L10n.t("voice.inputBoostOff") : "\(v)%" }
+    @objc private func inputBoostChanged(_ s: NSSlider) {
+        let v = Int((s.doubleValue / 10).rounded()) * 10     // шаг 10%: точнее на слух не различить
+        settings.voiceInputBoost = v
+        inputBoostValueLabel?.stringValue = inputBoostText(v)
     }
     @objc private func toggleMicGain(_ s: NSSwitch) {
         settings.voiceMicGain = (s.state == .on)
