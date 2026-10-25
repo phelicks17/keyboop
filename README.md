@@ -39,7 +39,7 @@ Apple, которого в Intel-маках нет. Голосовой набо�
 
 ## Сборка из исходников
 
-Нужны Xcode Command Line Tools и три внешние зависимости — их код чужой, в этот
+Нужны Xcode Command Line Tools и четыре внешние зависимости — их код чужой, в этот
 репозиторий он не входит, положи рядом в `vendor/`:
 
 ```bash
@@ -60,13 +60,17 @@ cd ..
 macOS 15 — на macOS 14 приложение молча умрёт ещё до `main()`. Проверено на живых
 пользователях, чинилось экстренным релизом.
 
-Ещё две:
+Ещё три:
 
 - **Sparkle** (автообновления) → `vendor/sparkle/Sparkle.framework` —
   [релизы](https://github.com/sparkle-project/Sparkle/releases)
 - **FluidAudio** (Parakeet на Neural Engine) → `vendor/fluidaudio-prebuilt/` со
   `libFluidAudio.a`, `Modules/` и `include/` —
   [исходники](https://github.com/FluidInference/FluidAudio)
+- **ONNX Runtime** (GigaAM, только Apple Silicon) → `vendor/onnxruntime/` с `include/` и
+  `lib/libonnxruntime.1.29.1.dylib` — готовый архив `onnxruntime-osx-arm64-1.29.1.tgz` из
+  [релизов](https://github.com/microsoft/onnxruntime/releases/tag/v1.29.1), команду подскажет
+  `build-app.sh`
 
 Дальше:
 

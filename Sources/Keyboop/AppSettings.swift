@@ -218,7 +218,7 @@ final class AppSettings {
     var voiceHotkeyKeyCode: Int { get { d.object(forKey: "voiceHotkeyKeyCode") == nil ? 61 : d.integer(forKey: "voiceHotkeyKeyCode") } set { d.set(newValue, forKey: "voiceHotkeyKeyCode") } }
     var voiceHotkeyModifiers: UInt64 { get { let v = d.object(forKey: "voiceHotkeyMods") as? Int; return UInt64(bitPattern: Int64(v ?? Int(CGEventFlags.maskAlternate.rawValue))) } set { d.set(Int(bitPattern: UInt(newValue)), forKey: "voiceHotkeyMods") } }
     var voiceHotkeyKeyLabel: String { get { d.string(forKey: "voiceHotkeyKeyLabel") ?? "правый ⌥" } set { d.set(newValue, forKey: "voiceHotkeyKeyLabel") } }
-    /// Движок распознавания: "parakeet" (ANE, точнее на RU — по умолчанию) или "whisper".
+    /// Движок распознавания: "parakeet" (ANE, точнее на RU — по умолчанию), "whisper" или "gigaam".
     #if arch(arm64) && !KEYBOOP_NO_PARAKEET
     private static let defaultVoiceEngine = "parakeet"
     #else
@@ -494,6 +494,8 @@ final class AppSettings {
     /// Имя модели whisper (файл ggml-<model>.bin в ~/Library/Application Support/Keyboop/models).
     /// small — баланс качества RU/пунктуации и скорости (research: ≥ small для стабильной пунктуации).
     var voiceModel: String { get { d.string(forKey: "voiceModel") ?? "small" } set { d.set(newValue, forKey: "voiceModel") } }
+    /// Вариант GigaAM v3 e2e (id из `GigaAMEngine.catalog`), действует при voiceEngine == "gigaam".
+    var gigaamModel: String { get { d.string(forKey: "gigaamModel") ?? "gigaam-v3-e2e-rnnt-int8" } set { d.set(newValue, forKey: "gigaamModel") } }
     /// UID выбранного микрофона ("" = системный по умолчанию).
     var voiceMicUID: String { get { d.string(forKey: "voiceMicUID") ?? "" } set { d.set(newValue, forKey: "voiceMicUID") } }
 
@@ -624,6 +626,12 @@ final class AppSettings {
     var voiceMicGainLevel: Int {
         get { d.object(forKey: "voiceMicGainLevel") == nil ? 90 : max(10, min(100, d.integer(forKey: "voiceMicGainLevel"))) }
         set { d.set(max(10, min(100, newValue)), forKey: "voiceMicGainLevel") }
+    }
+    /// Цифровое усиление записи диктовки сверх системного уровня, в процентах (`InputBoost`).
+    /// 100 по умолчанию — то есть выключено: запись идёт ровно такой, как её отдал микрофон.
+    var voiceInputBoost: Int {
+        get { d.object(forKey: "voiceInputBoost") == nil ? 100 : max(100, min(InputBoost.maxPercent, d.integer(forKey: "voiceInputBoost"))) }
+        set { d.set(max(100, min(InputBoost.maxPercent, newValue)), forKey: "voiceInputBoost") }
     }
     /// Потолок приглушения. Выше него ползунок не ходит, и это осознанно: убавить со ста процентов
     /// до девяноста означает не убавить ничего. 77 выбрано автором 30.07 как самое большое число,

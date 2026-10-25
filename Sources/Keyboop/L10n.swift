@@ -216,6 +216,10 @@ enum L10n {
         "voice.micGainHelp":  [.ru: "Некоторые программы (например браузер во время звонка) убавляют системный уровень микрофона и не возвращают его. Тогда следующая диктовка выходит тихой. Keyboop поднимает уровень перед записью. Это ОБЩАЯ системная настройка: поднятый вход увидят и другие программы, и обратно мы его не опускаем, иначе смысл теряется.",
                                .en: "Some apps (a browser during a call, for instance) turn the system microphone level down and never restore it, and your next dictation comes out quiet. Keyboop raises it before recording. This is a SYSTEM-WIDE setting: other apps see the raised level too, and we do not lower it back, or the whole point would be lost."],
         "voice.micGainLevel": [.ru: "До какого уровня", .en: "Up to which level"],
+        "voice.inputBoost":   [.ru: "Усиление сверх 100%", .en: "Boost above 100%"],
+        "voice.inputBoostOff":[.ru: "выкл", .en: "off"],
+        "voice.inputBoostHelp": [.ru: "Если и на максимуме системного уровня микрофон тихий, Keyboop может сам усилить записанный звук, до 400%. Это действует только на диктовку и ничего не меняет в системе. Новых подробностей в звуке не появится, а шум вырастет вместе с голосом, поэтому поднимайте, пока распознавание не перестанет терять тихие слова, и не дальше. Громкие места плавно прижимаются, чтобы не хрипеть. Новое значение действует со следующей диктовки.",
+                                .en: "If the microphone is still quiet at the maximum system level, Keyboop can boost the recorded sound itself, up to 400%. It affects dictation only and changes nothing in the system. No new detail appears in the sound and noise grows along with your voice, so raise it until recognition stops losing quiet words, and no further. Loud passages are softly limited so they do not distort. A new value applies from the next dictation."],
         "voice.micGainLevelHelp": [.ru: "Положение системного ползунка, а не громкость в децибелах: у разных микрофонов одна и та же доля означает разное усиление. 100% у части устройств это уже перегруз, поэтому по умолчанию 90%.",
                                    .en: "The position of the system slider, not a level in decibels: the same percentage means different gain on different microphones. On some devices 100% already clips, which is why the default is 90%."],
         // Сохранение аудио диктовки (задача 101, отзыв #110). ⚠️ Текст обязан честно называть цену:
@@ -538,6 +542,25 @@ enum L10n {
         "model.small.note": [.ru: "баланс качества и скорости", .en: "balance of quality and speed"],
         "model.medium.note":[.ru: "выше точность, медленнее", .en: "higher accuracy, slower"],
         "model.large.note": [.ru: "аккуратнее с пунктуацией и связностью, на 1–4 с медленнее", .en: "cleaner punctuation and phrasing, 1–4 s slower"],
+        // GigaAM v3 e2e (GigaAMEngine). Память ЗАМЕРЕНА 25.10.2026 стендом на тех же ONNX-файлах
+        // (пиковый RSS с ONNX Runtime, Linux x86): fp32 1.2–1.3 ГБ, int8 0.4–0.5 ГБ. На Mac цифры
+        // не перемерены. Хвост model.memNote сюда не подходит: у int8 память не равна размеру файла.
+        "gigaam.rnnt.name":  [.ru: "GigaAM v3 RNN-T", .en: "GigaAM v3 RNN-T"],
+        "gigaam.rnntq.name": [.ru: "GigaAM v3 RNN-T int8", .en: "GigaAM v3 RNN-T int8"],
+        "gigaam.ctc.name":   [.ru: "GigaAM v3 CTC", .en: "GigaAM v3 CTC"],
+        "gigaam.ctcq.name":  [.ru: "GigaAM v3 CTC int8", .en: "GigaAM v3 CTC int8"],
+        "gigaam.rnnt.note":  [.ru: "только русский, с пунктуацией, точнее CTC", .en: "Russian only, with punctuation, more accurate than CTC"],
+        "gigaam.rnntq.note": [.ru: "то же, вчетверо легче", .en: "the same, four times lighter"],
+        "gigaam.ctc.note":   [.ru: "только русский, с пунктуацией, проще RNN-T", .en: "Russian only, with punctuation, simpler than RNN-T"],
+        "gigaam.ctcq.note":  [.ru: "то же, вчетверо легче", .en: "the same, four times lighter"],
+        "gigaam.rnnt.help":  [.ru: "Модель Сбера для русской речи: сразу пишет с пунктуацией, заглавными и числами цифрами. Из двух вариантов GigaAM этот точнее. 892 МБ на диске и примерно 1.3 ГБ в памяти, считает на процессоре. Знает только русский, выбор языка на неё не действует. Длинную диктовку режет на куски до 25 секунд по паузам.\n\nТолько для Apple Silicon. Модель выгружается после часа без диктовки, а если системе не хватает памяти, то раньше.",
+                              .en: "Sber’s model for Russian speech: writes with punctuation, capitals and digits straight away. Of the two GigaAM variants this one is more accurate. 892 MB on disk and about 1.3 GB in memory, runs on the CPU. It knows Russian only, the language picker has no effect on it. Long dictation is cut at pauses into pieces of up to 25 seconds.\n\nApple Silicon only. The model is unloaded after an hour without dictation, and sooner if the system runs short of memory."],
+        "gigaam.rnntq.help": [.ru: "Та же GigaAM v3 RNN-T, сжатая до 8 бит: 226 МБ на диске и примерно 0.5 ГБ в памяти вместо 1.3 ГБ. На наших проверочных записях текст почти не отличался от полной версии, но на сложной речи сжатая ошибается чаще. Только русский, считает на процессоре.\n\nТолько для Apple Silicon. Модель выгружается после часа без диктовки, а если системе не хватает памяти, то раньше.",
+                              .en: "The same GigaAM v3 RNN-T compressed to 8 bits: 226 MB on disk and about 0.5 GB in memory instead of 1.3 GB. On our test recordings the text barely differed from the full version, but on difficult speech the compressed one makes more mistakes. Russian only, runs on the CPU.\n\nApple Silicon only. The model is unloaded after an hour without dictation, and sooner if the system runs short of memory."],
+        "gigaam.ctc.help":   [.ru: "Модель Сбера для русской речи с пунктуацией и нормализацией текста, вариант CTC. Устроена проще RNN-T и на наших записях ошибалась чуть чаще. 886 МБ на диске и примерно 1.2 ГБ в памяти, считает на процессоре. Знает только русский, выбор языка на неё не действует. Длинную диктовку режет на куски до 25 секунд по паузам.\n\nТолько для Apple Silicon. Модель выгружается после часа без диктовки, а если системе не хватает памяти, то раньше.",
+                              .en: "Sber’s model for Russian speech with punctuation and text normalization, the CTC variant. It is simpler than RNN-T and made slightly more mistakes on our recordings. 886 MB on disk and about 1.2 GB in memory, runs on the CPU. It knows Russian only, the language picker has no effect on it. Long dictation is cut at pauses into pieces of up to 25 seconds.\n\nApple Silicon only. The model is unloaded after an hour without dictation, and sooner if the system runs short of memory."],
+        "gigaam.ctcq.help":  [.ru: "Та же GigaAM v3 CTC, сжатая до 8 бит: 225 МБ на диске и примерно 0.4 ГБ в памяти вместо 1.2 ГБ. На наших проверочных записях текст почти не отличался от полной версии, иногда терялась точка в конце. Только русский, считает на процессоре.\n\nТолько для Apple Silicon. Модель выгружается после часа без диктовки, а если системе не хватает памяти, то раньше.",
+                              .en: "The same GigaAM v3 CTC compressed to 8 bits: 225 MB on disk and about 0.4 GB in memory instead of 1.2 GB. On our test recordings the text barely differed from the full version, sometimes the final period went missing. Russian only, runs on the CPU.\n\nApple Silicon only. The model is unloaded after an hour without dictation, and sooner if the system runs short of memory."],
         // Общие действия / подсказки (тултипы, a11y)
         "act.delete":     [.ru: "Удалить", .en: "Delete"],
         "act.close":      [.ru: "Закрыть", .en: "Close"],
@@ -1432,6 +1455,10 @@ enum L10n {
                                 .en: "Parakeet did not answer, using Whisper instead"],
         "voice.parakeetNoAlt": [.ru: "Parakeet не работает на этой macOS. Скачайте модель Whisper в настройках",
                                 .en: "Parakeet does not work on this macOS. Download a Whisper model in settings"],
+        "voice.gigaamFell":    [.ru: "GigaAM не ответила, распознаю через Whisper",
+                                .en: "GigaAM did not answer, using Whisper instead"],
+        "voice.gigaamNoAlt":   [.ru: "GigaAM не сработала. Скачайте модель Whisper в настройках",
+                                .en: "GigaAM did not work. Download a Whisper model in settings"],
         "menu.copyLastDone": [.ru: "Скопирована последняя диктовка", .en: "Last dictation copied"],
         // Редкий случай: срок хранения истёк между открытием меню и кликом. В остальных ситуациях
         // пункта в меню просто нет, поэтому объяснять «история выключена» здесь уже не нужно.
