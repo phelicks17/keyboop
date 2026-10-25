@@ -239,6 +239,12 @@ final class AppSettings {
     /// тем, кто диктует по кусочкам в мессенджер или в поле поиска.
     var voiceNoCapital: Bool { get { d.bool(forKey: "voiceNoCapital") } set { d.set(newValue, forKey: "voiceNoCapital") } }
     var voiceNoFinalPeriod: Bool { get { d.bool(forKey: "voiceNoFinalPeriod") } set { d.set(newValue, forKey: "voiceNoFinalPeriod") } }
+    /// Регистр первой буквы по тексту перед курсором (`VoiceOutputCase.matchedToContext`).
+    /// Включено по умолчанию (просьба автора 25.10.2026); при «Не начинать с заглавной» не действует.
+    var voiceContextCase: Bool {
+        get { d.object(forKey: "voiceContextCase") == nil ? true : d.bool(forKey: "voiceContextCase") }
+        set { d.set(newValue, forKey: "voiceContextCase") }
+    }
 
     /// НЕ СТАВИТЬ ДЛИННЫЕ ТИРЕ в надиктованном тексте (автор 13.08). По умолчанию ВЫКЛ: длинное тире
     /// это нормальный знак русской пунктуации, и молча переписывать его всем нельзя.

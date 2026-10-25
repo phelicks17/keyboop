@@ -836,7 +836,8 @@ final class VoiceController {
     /// несут смысл, а многоточие вдобавок часто ставит сама модель на оборванной фразе.
     /// Регистр опускаем только у первой буквы предложения; имена, аббревиатуры и намеренный регистр
     /// словаря диктовки защищает `VoiceOutputCase`.
-    static func applyOutputOptions(_ text: String) -> String {
+    /// `before` — хвост текста перед курсором для `voiceContextCase` (nil — не прочитали).
+    static func applyOutputOptions(_ text: String, before: String? = nil) -> String {
         let s = AppSettings.shared
         var out = text
         if s.voiceNoFinalPeriod, out.hasSuffix("."), !out.hasSuffix("..") {
@@ -844,6 +845,9 @@ final class VoiceController {
             out = String(out.reversed().drop { $0 == " " }.reversed())
         }
         if s.voiceNoCapital { out = lowercasedSentenceStarts(out) }
+        else if s.voiceContextCase {
+            out = VoiceOutputCase.matchedToContext(out, before: before, keepsCase: VoiceDictionary.shared.keepsCase)
+        }
         // Длинные тире → обычный дефис. Меняем и «—», и «–»: на слух они не различаются вовсе, а
         // модель ставит то одно, то другое.
         if s.voiceNoEmDash {
@@ -922,7 +926,18 @@ final class VoiceController {
         // намерение, заявленное правым ⌘ в момент окончания диктовки.
         let autoEnter = settings.voiceAutoEnter || sendGestureArmed
         sendGestureArmed = false
-        let out = Self.applyOutputOptions(clean) + ((settings.voiceTrailingSpace && !autoEnter) ? " " : "")
+        // Хвост перед курсором читаем прямо перед вставкой: фокус уже вернулся в поле человека.
+        // Читается не везде (выделение, курсор в начале, программа не отдаёт текст), тогда nil и
+        // регистр остаётся как у модели. Содержимое в лог не пишем, только сам факт.
+        let contextCase = settings.voiceContextCase && !settings.voiceNoCapital
+        let before = contextCase ? AXScreenCheck.textBeforeCaret(maxLen: 40) : nil
+        if contextCase {
+            kbLog("voice: регистр по контексту — \(before == nil ? "текст перед курсором не читается" : "прочитан")")
+        }
+        // «Не ставить точку в конце» гасит и хвостовой пробел (просьба автора 25.10.2026): без точки
+        // фраза обычно продолжается, и пробел перед следующим словом человек ставит сам.
+        let trailingSpace = settings.voiceTrailingSpace && !autoEnter && !settings.voiceNoFinalPeriod
+        let out = Self.applyOutputOptions(clean, before: before) + (trailingSpace ? " " : "")
         // См. второй post ниже по файлу: время НАЧАЛА вставки нужно получателю, чтобы отличить
         // «человек ещё ничего не печатал» от «человек уже набрал слово, пока мы печатали своё».
         let insertT0 = ProcessInfo.processInfo.systemUptime
