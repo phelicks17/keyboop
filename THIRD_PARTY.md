@@ -95,3 +95,28 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND...
 
 AppKit, Carbon (Text Input Services), CoreGraphics, IOKit, AVFoundation, Speech,
 Translation и прочие — часть macOS, отдельной атрибуции не требуют.
+
+## 7. ONNX Runtime — вычисления для GigaAM (только Apple Silicon)
+
+<https://github.com/microsoft/onnxruntime>, лицензия MIT, готовая сборка
+`onnxruntime-osx-arm64-1.29.1` — `vendor/onnxruntime`. Лежит в бандле:
+`Keyboop.app/Contents/Frameworks/libonnxruntime.dylib`, грузится только при диктовке GigaAM.
+
+```
+MIT License
+Copyright (c) Microsoft Corporation
+… (полный текст: vendor/onnxruntime/LICENSE, сторонние компоненты: vendor/onnxruntime/ThirdPartyNotices.txt)
+```
+
+## 8. Модель GigaAM v3 e2e (Сбер) — скачивается по действию человека
+
+Модель распознавания русской речи **GigaAM v3** (`e2e_ctc`, `e2e_rnnt`), лицензия **MIT**,
+<https://huggingface.co/ai-sage/GigaAM-v3>, код <https://github.com/salute-developers/GigaAM>.
+В приложение не входит: скачивается из настроек по кнопке, в ONNX-экспорте
+<https://huggingface.co/istupakov/gigaam-v3-onnx> (MIT, запинен на коммит, файлы сверяются по SHA-256).
+
+```
+MIT License
+Copyright (c) 2024 GigaChat Team
+… (тот же текст и у ONNX-экспорта istupakov/gigaam-v3-onnx)
+```

@@ -538,6 +538,25 @@ enum L10n {
         "model.small.note": [.ru: "баланс качества и скорости", .en: "balance of quality and speed"],
         "model.medium.note":[.ru: "выше точность, медленнее", .en: "higher accuracy, slower"],
         "model.large.note": [.ru: "аккуратнее с пунктуацией и связностью, на 1–4 с медленнее", .en: "cleaner punctuation and phrasing, 1–4 s slower"],
+        // GigaAM v3 e2e (GigaAMEngine). Память ЗАМЕРЕНА 25.10.2026 стендом на тех же ONNX-файлах
+        // (пиковый RSS с ONNX Runtime, Linux x86): fp32 1.2–1.3 ГБ, int8 0.4–0.5 ГБ. На Mac цифры
+        // не перемерены. Хвост model.memNote сюда не подходит: у int8 память не равна размеру файла.
+        "gigaam.rnnt.name":  [.ru: "GigaAM v3 RNN-T", .en: "GigaAM v3 RNN-T"],
+        "gigaam.rnntq.name": [.ru: "GigaAM v3 RNN-T int8", .en: "GigaAM v3 RNN-T int8"],
+        "gigaam.ctc.name":   [.ru: "GigaAM v3 CTC", .en: "GigaAM v3 CTC"],
+        "gigaam.ctcq.name":  [.ru: "GigaAM v3 CTC int8", .en: "GigaAM v3 CTC int8"],
+        "gigaam.rnnt.note":  [.ru: "только русский, с пунктуацией, точнее CTC", .en: "Russian only, with punctuation, more accurate than CTC"],
+        "gigaam.rnntq.note": [.ru: "то же, вчетверо легче", .en: "the same, four times lighter"],
+        "gigaam.ctc.note":   [.ru: "только русский, с пунктуацией, проще RNN-T", .en: "Russian only, with punctuation, simpler than RNN-T"],
+        "gigaam.ctcq.note":  [.ru: "то же, вчетверо легче", .en: "the same, four times lighter"],
+        "gigaam.rnnt.help":  [.ru: "Модель Сбера для русской речи: сразу пишет с пунктуацией, заглавными и числами цифрами. Из двух вариантов GigaAM этот точнее. 892 МБ на диске и примерно 1.3 ГБ в памяти, считает на процессоре. Знает только русский, выбор языка на неё не действует. Длинную диктовку режет на куски до 25 секунд по паузам.\n\nТолько для Apple Silicon. Модель выгружается после часа без диктовки, а если системе не хватает памяти, то раньше.",
+                              .en: "Sber’s model for Russian speech: writes with punctuation, capitals and digits straight away. Of the two GigaAM variants this one is more accurate. 892 MB on disk and about 1.3 GB in memory, runs on the CPU. It knows Russian only, the language picker has no effect on it. Long dictation is cut at pauses into pieces of up to 25 seconds.\n\nApple Silicon only. The model is unloaded after an hour without dictation, and sooner if the system runs short of memory."],
+        "gigaam.rnntq.help": [.ru: "Та же GigaAM v3 RNN-T, сжатая до 8 бит: 226 МБ на диске и примерно 0.5 ГБ в памяти вместо 1.3 ГБ. На наших проверочных записях текст почти не отличался от полной версии, но на сложной речи сжатая ошибается чаще. Только русский, считает на процессоре.\n\nТолько для Apple Silicon. Модель выгружается после часа без диктовки, а если системе не хватает памяти, то раньше.",
+                              .en: "The same GigaAM v3 RNN-T compressed to 8 bits: 226 MB on disk and about 0.5 GB in memory instead of 1.3 GB. On our test recordings the text barely differed from the full version, but on difficult speech the compressed one makes more mistakes. Russian only, runs on the CPU.\n\nApple Silicon only. The model is unloaded after an hour without dictation, and sooner if the system runs short of memory."],
+        "gigaam.ctc.help":   [.ru: "Модель Сбера для русской речи с пунктуацией и нормализацией текста, вариант CTC. Устроена проще RNN-T и на наших записях ошибалась чуть чаще. 886 МБ на диске и примерно 1.2 ГБ в памяти, считает на процессоре. Знает только русский, выбор языка на неё не действует. Длинную диктовку режет на куски до 25 секунд по паузам.\n\nТолько для Apple Silicon. Модель выгружается после часа без диктовки, а если системе не хватает памяти, то раньше.",
+                              .en: "Sber’s model for Russian speech with punctuation and text normalization, the CTC variant. It is simpler than RNN-T and made slightly more mistakes on our recordings. 886 MB on disk and about 1.2 GB in memory, runs on the CPU. It knows Russian only, the language picker has no effect on it. Long dictation is cut at pauses into pieces of up to 25 seconds.\n\nApple Silicon only. The model is unloaded after an hour without dictation, and sooner if the system runs short of memory."],
+        "gigaam.ctcq.help":  [.ru: "Та же GigaAM v3 CTC, сжатая до 8 бит: 225 МБ на диске и примерно 0.4 ГБ в памяти вместо 1.2 ГБ. На наших проверочных записях текст почти не отличался от полной версии, иногда терялась точка в конце. Только русский, считает на процессоре.\n\nТолько для Apple Silicon. Модель выгружается после часа без диктовки, а если системе не хватает памяти, то раньше.",
+                              .en: "The same GigaAM v3 CTC compressed to 8 bits: 225 MB on disk and about 0.4 GB in memory instead of 1.2 GB. On our test recordings the text barely differed from the full version, sometimes the final period went missing. Russian only, runs on the CPU.\n\nApple Silicon only. The model is unloaded after an hour without dictation, and sooner if the system runs short of memory."],
         // Общие действия / подсказки (тултипы, a11y)
         "act.delete":     [.ru: "Удалить", .en: "Delete"],
         "act.close":      [.ru: "Закрыть", .en: "Close"],
@@ -1432,6 +1451,10 @@ enum L10n {
                                 .en: "Parakeet did not answer, using Whisper instead"],
         "voice.parakeetNoAlt": [.ru: "Parakeet не работает на этой macOS. Скачайте модель Whisper в настройках",
                                 .en: "Parakeet does not work on this macOS. Download a Whisper model in settings"],
+        "voice.gigaamFell":    [.ru: "GigaAM не ответила, распознаю через Whisper",
+                                .en: "GigaAM did not answer, using Whisper instead"],
+        "voice.gigaamNoAlt":   [.ru: "GigaAM не сработала. Скачайте модель Whisper в настройках",
+                                .en: "GigaAM did not work. Download a Whisper model in settings"],
         "menu.copyLastDone": [.ru: "Скопирована последняя диктовка", .en: "Last dictation copied"],
         // Редкий случай: срок хранения истёк между открытием меню и кликом. В остальных ситуациях
         // пункта в меню просто нет, поэтому объяснять «история выключена» здесь уже не нужно.

@@ -3708,8 +3708,8 @@ final class DetailVC: NSViewController {
 
     /// Одна запись каталога моделей. Движок выводится из активной модели (тумблер Whisper/Parakeet убран).
     struct UnifiedModel {
-        let engine: String      // "parakeet" | "whisper"
-        let id: String          // "parakeet" или имя whisper-модели (base/small/…)
+        let engine: String      // "parakeet" | "whisper" | "gigaam"
+        let id: String          // "parakeet", имя whisper-модели (base/small/…) или id варианта GigaAM
         let display: String
         let size: String
         let note: String
@@ -3727,11 +3727,13 @@ final class DetailVC: NSViewController {
             return body.contains("%@") ? String(format: body, L10n.t("model.memNote")) : body
         }
         func isInstalled() -> Bool {
-            engine == "parakeet" ? ParakeetEngine.modelInstalled : ModelDownloader.shared.isInstalled(id)
+            if engine == "gigaam" { return GigaAMEngine.isInstalled(id) }
+            return engine == "parakeet" ? ParakeetEngine.modelInstalled : ModelDownloader.shared.isInstalled(id)
         }
     }
 
-    /// Полный каталог: Parakeet (рекомендуемый, по умолчанию) первым, затем whisper по возрастанию размера.
+    /// Полный каталог: Parakeet (рекомендуемый, по умолчанию) первым, затем whisper по возрастанию размера,
+    /// затем GigaAM (на Intel её каталог пуст, см. GigaAMEngine).
     private func unifiedModels() -> [UnifiedModel] {
         var list: [UnifiedModel] = []
         #if arch(arm64) && !KEYBOOP_NO_PARAKEET   // Intel: Parakeet физически отсутствует в сборке (нет Neural Engine) — не дразним
@@ -3741,6 +3743,10 @@ final class DetailVC: NSViewController {
         #endif
         list += ModelDownloader.catalog.map {
             UnifiedModel(engine: "whisper", id: $0.name, display: Self.whisperDisplayName($0.name),
+                         size: L10n.size($0.size), note: L10n.t($0.note), helpKey: $0.help)
+        }
+        list += GigaAMEngine.catalog.map {
+            UnifiedModel(engine: "gigaam", id: $0.id, display: L10n.t($0.name),
                          size: L10n.size($0.size), note: L10n.t($0.note), helpKey: $0.help)
         }
         return list
@@ -3850,7 +3856,8 @@ final class DetailVC: NSViewController {
 
     /// Активна ли модель (движок + конкретная whisper-модель).
     private func isActiveModel(_ m: UnifiedModel) -> Bool {
-        m.engine == "parakeet"
+        if m.engine == "gigaam" { return settings.voiceEngine == "gigaam" && settings.gigaamModel == m.id }
+        return m.engine == "parakeet"
             ? settings.voiceEngine == "parakeet"
             : (settings.voiceEngine == "whisper" && settings.voiceModel == m.id)
     }
@@ -3859,6 +3866,9 @@ final class DetailVC: NSViewController {
     private func activateModel(_ m: UnifiedModel) {
         if m.engine == "parakeet" {
             settings.voiceEngine = "parakeet"
+        } else if m.engine == "gigaam" {
+            settings.voiceEngine = "gigaam"
+            settings.gigaamModel = m.id
         } else {
             settings.voiceEngine = "whisper"
             settings.voiceModel = m.id
@@ -4970,6 +4980,13 @@ final class DetailVC: NSViewController {
         }
         if m.engine == "whisper" {
             ModelDownloader.shared.download(m.id, progress: onProgress, done: onDone)
+        } else if m.engine == "gigaam" {
+            Task {
+                let ok = await GigaAMEngine.shared.download(m.id, progress: { p in
+                    DispatchQueue.main.async { onProgress(p) }
+                })
+                await MainActor.run { onDone(ok) }
+            }
         } else {
             Task {
                 let ok = await ParakeetEngine.shared.download(progress: { p in
@@ -5010,6 +5027,7 @@ final class DetailVC: NSViewController {
             }
         }
         if m.engine == "whisper" { ModelDownloader.shared.delete(m.id, completion: finish) }
+        else if m.engine == "gigaam" { GigaAMEngine.shared.delete(m.id, completion: finish) }
         else { ParakeetEngine.shared.deleteModel(completion: finish) }
     }
 }

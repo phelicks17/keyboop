@@ -194,12 +194,25 @@ FA="vendor/fluidaudio-prebuilt"
 # Sparkle (автообновления): динамический фреймворк. Линкуем + rpath на Contents/Frameworks,
 # куда сам фреймворк копируется ниже (с переподписью вложенных бинарей нашим Developer ID).
 SPARKLE="vendor/sparkle"
+# ONNX Runtime (GigaAM, только arm64): готовая сборка Microsoft. Нужны заголовки для компиляции и
+# .dylib для бандла; к бинарю НЕ линкуется, грузится dlopen'ом при первой диктовке GigaAM
+# (почему — в шапке GigaAMCore.swift). Версия 1.29.1: в 1.21–1.24 на x86 ломались int8-модели.
+ORT="vendor/onnxruntime"
+ORT_DYLIB="$ORT/lib/libonnxruntime.1.29.1.dylib"
+if [ ! -f "$ORT/include/onnxruntime_c_api.h" ] || [ ! -f "$ORT_DYLIB" ]; then
+  echo "⚠️  ONNX Runtime не найден. Положи один раз:"
+  echo "    curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.29.1/onnxruntime-osx-arm64-1.29.1.tgz | tar xz -C vendor \\"
+  echo "      && mv vendor/onnxruntime-osx-arm64-1.29.1 $ORT"
+  echo "    (SHA-256 архива: c845ad2f4340669dc454c0ae092ccef7270d5bf858281890aef3c9bbf7da41e9)"
+  exit 1
+fi
 swiftc -O Sources/Keyboop/*.swift \
   -o "$APP/Contents/MacOS/Keyboop" \
   -swift-version 5 -target arm64-apple-macos14.0 \
   -import-objc-header Sources/Keyboop/whisper-bridging.h \
   -I "$WHISPER/include" -I "$WHISPER/ggml/include" \
   -I "$FA/Modules" -I "$FA/include/FastClusterWrapper" -I "$FA/include/MachTaskSelfWrapper" \
+  -I "$ORT/include" \
   -L "$WHISPER_BUILD/src" -L "$WHISPER_BUILD/ggml/src" \
   -L "$WHISPER_BUILD/ggml/src/ggml-metal" -L "$WHISPER_BUILD/ggml/src/ggml-blas" \
   -L "$FA" -lFluidAudio \
@@ -406,6 +419,13 @@ codesign -f -s "$SIGN_ID" $CS_OPTS "$FV/Autoupdate"
 codesign -f -s "$SIGN_ID" $CS_OPTS "$FW" \
   && echo "  Sparkle.framework встроен и переподписан ($SIGN_ID)" \
   || { echo "  ⚠️  ОШИБКА переподписи Sparkle"; [ "${KEYBOOP_RELEASE:-}" = "1" ] && exit 1; }
+# ONNX Runtime для GigaAM: arm64-only .dylib, в universal-сборке x86-срез его просто не грузит.
+# Кладём одним файлом под стабильным именем (его ищет GigaAMEngine) и подписываем тем же SIGN_ID:
+# в релизе hardened runtime пустит в dlopen только библиотеку нашей же команды.
+cp "$ORT_DYLIB" "$APP/Contents/Frameworks/libonnxruntime.dylib"
+codesign -f -s "$SIGN_ID" $CS_OPTS "$APP/Contents/Frameworks/libonnxruntime.dylib" \
+  && echo "  libonnxruntime.dylib встроен и подписан ($SIGN_ID)" \
+  || { echo "  ⚠️  ОШИБКА подписи libonnxruntime.dylib"; [ "${KEYBOOP_RELEASE:-}" = "1" ] && exit 1; }
 
 # Подписываем само приложение (после вложенных — печатает бандл целиком).
 if codesign --force --sign "$SIGN_ID" --entitlements "$ENT" $CS_OPTS "$APP" 2>/dev/null; then
