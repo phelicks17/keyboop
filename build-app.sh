@@ -191,6 +191,14 @@ fi
 # FluidAudio (Parakeet/CoreML/ANE) — предсобранная статика, предсобранная статика.
 # Требует macOS 14 (поэтому таргет подняли 13→14).
 FA="vendor/fluidaudio-prebuilt"
+# KEYBOOP_NO_PARAKEET=1 — сборка БЕЗ FluidAudio (Parakeet и потоковой модели в ней нет). Флаг
+# компиляции с тем же именем код понимает давно (#if !KEYBOOP_NO_PARAKEET); здесь он только
+# доведён до скрипта, чтобы собрать приложение тем, у кого нет vendor/fluidaudio-prebuilt.
+FA_FLAGS=(-I "$FA/Modules" -I "$FA/include/FastClusterWrapper" -I "$FA/include/MachTaskSelfWrapper" -L "$FA" -lFluidAudio)
+if [ "${KEYBOOP_NO_PARAKEET:-}" = "1" ]; then
+  FA_FLAGS=(-D KEYBOOP_NO_PARAKEET)
+  echo "  (KEYBOOP_NO_PARAKEET=1: собираю без FluidAudio, Parakeet в этой сборке не будет)"
+fi
 # Sparkle (автообновления): динамический фреймворк. Линкуем + rpath на Contents/Frameworks,
 # куда сам фреймворк копируется ниже (с переподписью вложенных бинарей нашим Developer ID).
 SPARKLE="vendor/sparkle"
@@ -211,11 +219,10 @@ swiftc -O Sources/Keyboop/*.swift \
   -swift-version 5 -target arm64-apple-macos14.0 \
   -import-objc-header Sources/Keyboop/whisper-bridging.h \
   -I "$WHISPER/include" -I "$WHISPER/ggml/include" \
-  -I "$FA/Modules" -I "$FA/include/FastClusterWrapper" -I "$FA/include/MachTaskSelfWrapper" \
+  "${FA_FLAGS[@]}" \
   -I "$ORT/include" \
   -L "$WHISPER_BUILD/src" -L "$WHISPER_BUILD/ggml/src" \
   -L "$WHISPER_BUILD/ggml/src/ggml-metal" -L "$WHISPER_BUILD/ggml/src/ggml-blas" \
-  -L "$FA" -lFluidAudio \
   -lwhisper -lggml -lggml-cpu -lggml-metal -lggml-blas -lggml-base -lc++ \
   -framework AppKit -framework Carbon -framework ServiceManagement -framework ApplicationServices -framework IOKit \
   -framework AVFoundation -framework CoreAudio -framework AudioToolbox -framework Metal -framework MetalKit -framework Accelerate -framework CoreML \
