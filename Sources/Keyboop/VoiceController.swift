@@ -934,7 +934,10 @@ final class VoiceController {
         if contextCase {
             kbLog("voice: регистр по контексту — \(before == nil ? "текст перед курсором не читается" : "прочитан")")
         }
-        let out = Self.applyOutputOptions(clean, before: before) + ((settings.voiceTrailingSpace && !autoEnter) ? " " : "")
+        // «Не ставить точку в конце» гасит и хвостовой пробел (просьба автора 25.10.2026): без точки
+        // фраза обычно продолжается, и пробел перед следующим словом человек ставит сам.
+        let trailingSpace = settings.voiceTrailingSpace && !autoEnter && !settings.voiceNoFinalPeriod
+        let out = Self.applyOutputOptions(clean, before: before) + (trailingSpace ? " " : "")
         // См. второй post ниже по файлу: время НАЧАЛА вставки нужно получателю, чтобы отличить
         // «человек ещё ничего не печатал» от «человек уже набрал слово, пока мы печатали своё».
         let insertT0 = ProcessInfo.processInfo.systemUptime
