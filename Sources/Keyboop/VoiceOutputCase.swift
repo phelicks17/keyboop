@@ -18,6 +18,11 @@ enum VoiceOutputCase {
         "mr", "mrs", "ms", "dr", "prof", "vs", "fig", "no", "etc", "e", "g", "i"
     ]
 
+    /// Сокращения, за которыми обычно идёт имя собственное («ул. Ленина», «г. Тверь»).
+    private static let beforeProperName: Set<String> = [
+        "г", "ул", "пр", "им", "обл", "пл", "пер", "mr", "mrs", "ms", "dr", "prof"
+    ]
+
     /// Снять заглавную только у начала предложения, сохранив аббревиатуры, имена и слова с
     /// намеренным регистром из словаря диктовки.
     ///
@@ -88,6 +93,66 @@ enum VoiceOutputCase {
             i += 1
         }
         return String(characters)
+    }
+
+    /// Регистр первой буквы по тексту ПЕРЕД курсором (просьба автора 25.10.2026). Модель не видит,
+    /// куда вставляется фраза, и почти всегда начинает её с заглавной, будто это новое предложение.
+    /// Если перед курсором конец предложения, делаем первую букву заглавной, если середина фразы,
+    /// строчной. `before == nil` или пустой хвост означают «не знаем», и тогда текст не трогаем.
+    ///
+    /// Защита та же, что у «Не начинать с заглавной»: имена, аббревиатуры, словарь диктовки. И
+    /// ограничение то же: неизвестное имя собственное («в Твери») в середине фразы станет строчным.
+    static func matchedToContext(
+        _ text: String,
+        before: String?,
+        keepsCase: CaseKeeper = { _ in false }
+    ) -> String {
+        guard let before, let sentenceStart = startsSentence(after: Substring(before)) else { return text }
+        var characters = Array(text)
+        guard let i = characters.firstIndex(where: { $0.isLetter || $0.isNumber }),
+              characters[i].isLetter else { return text }
+        var j = i
+        while j < characters.count, characters[j].isLetter || characters[j].isNumber { j += 1 }
+        let token = String(characters[i..<j])
+        let changed: String
+        if sentenceStart {
+            guard characters[i].isLowercase else { return text }
+            changed = characters[i].uppercased()
+        } else {
+            // «I» в английском всегда заглавное, а для isAcronym оно слишком короткое.
+            guard token != "I", shouldLower(token, folded: foldToken(token),
+                                             repeatedCapitalizedTokens: [], keepsCase: keepsCase)
+            else { return text }
+            changed = characters[i].lowercased()
+        }
+        guard changed.count == 1, let c = changed.first else { return text }
+        characters[i] = c
+        return String(characters)
+    }
+
+    /// true — курсор в начале предложения, false — посреди фразы, nil — хвост пустой.
+    private static func startsSentence(after before: Substring) -> Bool? {
+        var tail = before
+        while let last = tail.last, last == " " || last == "\t" || last == "\u{00A0}" { tail = tail.dropLast() }
+        guard let last = tail.last else { return nil }
+        if last.isNewline { return true }
+        // Закрывающие кавычки и скобки пропускаем: «...стоп». и (...) ведут себя как сам знак.
+        while let l = tail.last, "»›\"”’')]}".contains(l) { tail = tail.dropLast() }
+        guard let l = tail.last else { return nil }
+        switch l {
+        case "!", "?", "…":
+            return true
+        case ".":
+            let word = foldToken(String(tail.dropLast().reversed().prefix { $0.isLetter }.reversed()))
+            // После «ул.», «г.», «Mr.» почти всегда имя собственное: регистр оставляем модели.
+            if beforeProperName.contains(word) { return nil }
+            return !notSentenceEnd.contains(word)
+        case "—", "–":
+            // Тире в начале строки — реплика диалога; посреди фразы — просто тире.
+            return startsSentence(after: tail.dropLast()) ?? true
+        default:
+            return false
+        }
     }
 
     private static func shouldLower(

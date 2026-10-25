@@ -1036,6 +1036,11 @@ enum L10n {
         // Сводка в строке: человек видит текущее состояние, не раскрывая группу.
         "voice.sumDefault":  [.ru: "Как распознала модель", .en: "As the model produced it"],
         "voice.sumNoCap":    [.ru: "без заглавной", .en: "no capital"],
+        "voice.ctxCase":     [.ru: "Заглавная по тексту перед курсором", .en: "Capital from text before the cursor"],
+        "voice.ctxCaseSub":  [.ru: "После точки — с заглавной, посреди фразы — со строчной",
+                              .en: "Capital after a full stop, lowercase mid-sentence"],
+        "voice.ctxCaseHelp": [.ru: "Перед вставкой Keyboop смотрит на несколько символов перед курсором. Если там конец предложения (точка, «?», «!», «…», новая строка или тире реплики), фраза начинается с заглавной, иначе со строчной. Меняется только первая буква. Имена, аббревиатуры, «I» и слова из словаря диктовки не трогаем, после «г.», «ул.» и похожих сокращений тоже. Неизвестное имя собственное в середине фразы («живу в Твери») станет строчным: отличить его от обычного слова нечем. Если текст перед курсором прочитать нельзя (курсор в начале поля, выделен текст, программа его не отдаёт), регистр остаётся как у модели. Текст читается только на этом Mac и никуда не записывается. При включённом «Не начинать с заглавной» не действует.",
+                              .en: "Before inserting, Keyboop looks at a few characters before the cursor. If a sentence ends there (full stop, “?”, “!”, “…”, a new line or a dialogue dash), the phrase starts with a capital, otherwise with a lowercase letter. Only the first letter changes. Names, acronyms, “I” and dictation dictionary words are left alone, and so is the word after “Mr.”, “Dr.” and similar abbreviations. An unknown proper noun mid-sentence will be lowercased: there is no way to tell it from an ordinary word. If the text before the cursor cannot be read (cursor at the start of the field, a selection, or the app does not expose it), the case stays as recognized. The text is read only on this Mac and is never stored. Has no effect while “No leading capital” is on."],
         "voice.sumNoDot":    [.ru: "без точки", .en: "no period"],
         "voice.sumEnter":    [.ru: "с отправкой", .en: "auto-send"],
         "voice.sumNoSpace":  [.ru: "без пробела", .en: "no space"],
