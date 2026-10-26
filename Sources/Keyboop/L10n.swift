@@ -1036,6 +1036,11 @@ enum L10n {
         // Сводка в строке: человек видит текущее состояние, не раскрывая группу.
         "voice.sumDefault":  [.ru: "Как распознала модель", .en: "As the model produced it"],
         "voice.sumNoCap":    [.ru: "без заглавной", .en: "no capital"],
+        "voice.fillers":     [.ru: "Убирать «э-э», «ммм», «хм»", .en: "Drop “um”, “uh”, “hmm”"],
+        "voice.fillersSub":  [.ru: "Звуки-заминки не попадают в текст и в историю",
+                              .en: "Hesitation sounds stay out of the text and the history"],
+        "voice.fillersHelp": [.ru: "Из диктовки убираются звуки-заминки: «э», «э-э», «эм», «мм», «м-м», «хм», «аа», а по-английски «um», «uh», «hmm», «erm». Запятые, которые модель поставила вокруг заминки, уходят вместе с ней: «Я, э-э, думаю» станет «Я думаю». Слова со смыслом остаются: «а», «ну», «ага», «ой», «эх». Не трогаются и обозначения заглавными («батарейки АА»), и «мм» после числа («5 мм»). Если вся диктовка состояла из заминок, ничего не вставляется. Действует на диктовку; импорт файлов и запись звонков записываются как есть.",
+                              .en: "Hesitation sounds are removed from dictation: “um”, “uh”, “hmm”, “erm”, and the Russian «э», «э-э», «эм», «мм», «м-м», «хм», «аа». Commas the model put around a hesitation go with it. Meaningful words stay: «а», «ну», «ага», «ой», «эх». Capitalized designations («АА» batteries) and «мм» after a number (millimetres) are left alone. If the whole dictation was hesitation, nothing is inserted. Applies to dictation; file import and call recording are transcribed as is."],
         "voice.ctxCase":     [.ru: "Заглавная по тексту перед курсором", .en: "Capital from text before the cursor"],
         "voice.ctxCaseSub":  [.ru: "После точки — с заглавной, посреди фразы — со строчной",
                               .en: "Capital after a full stop, lowercase mid-sentence"],

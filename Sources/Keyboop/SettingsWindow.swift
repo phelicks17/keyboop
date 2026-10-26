@@ -3825,6 +3825,9 @@ final class DetailVC: NSViewController {
             subordinateRow(switchRow(L10n.t("voice.ctxCase"), L10n.t("voice.ctxCaseSub"), settings.voiceContextCase, #selector(toggleVoiceContextCase),
                                      help: L10n.t("voice.ctxCaseHelp"), key: "voice.ctxCase")),
             hairline(),
+            subordinateRow(switchRow(L10n.t("voice.fillers"), L10n.t("voice.fillersSub"), settings.voiceDropFillers, #selector(toggleVoiceDropFillers),
+                                     help: L10n.t("voice.fillersHelp"), key: "voice.fillers")),
+            hairline(),
             subordinateRow(switchRow(L10n.t("voice.noPeriod"), L10n.t("voice.noPeriodSub"), settings.voiceNoFinalPeriod, #selector(toggleVoiceNoPeriod),
                                      help: L10n.t("voice.noPeriodHelp"), key: "voice.noPeriod")),
             hairline(),
@@ -4162,6 +4165,7 @@ final class DetailVC: NSViewController {
     }
     @objc private func toggleVoiceNoCapital(_ s: NSSwitch) { settings.voiceNoCapital = (s.state == .on) }
     @objc private func toggleVoiceContextCase(_ s: NSSwitch) { settings.voiceContextCase = (s.state == .on) }
+    @objc private func toggleVoiceDropFillers(_ s: NSSwitch) { settings.voiceDropFillers = (s.state == .on) }
     @objc private func toggleVoiceNoEmDash(_ s: NSSwitch) { settings.voiceNoEmDash = (s.state == .on) }
     @objc private func toggleVoiceNoPeriod(_ s: NSSwitch) { settings.voiceNoFinalPeriod = (s.state == .on) }
     /// Чем «отправлять» после диктовки. Порядок — по распространённости: Enter (Telegram, iMessage,
