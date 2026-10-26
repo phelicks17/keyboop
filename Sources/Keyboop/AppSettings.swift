@@ -239,6 +239,12 @@ final class AppSettings {
     /// тем, кто диктует по кусочкам в мессенджер или в поле поиска.
     var voiceNoCapital: Bool { get { d.bool(forKey: "voiceNoCapital") } set { d.set(newValue, forKey: "voiceNoCapital") } }
     var voiceNoFinalPeriod: Bool { get { d.bool(forKey: "voiceNoFinalPeriod") } set { d.set(newValue, forKey: "voiceNoFinalPeriod") } }
+    /// Убирать звуки-заминки «э-э», «ммм», «хм» из диктовки (`VoiceFillers`). Включено по умолчанию
+    /// (просьба автора 26.10.2026).
+    var voiceDropFillers: Bool {
+        get { d.object(forKey: "voiceDropFillers") == nil ? true : d.bool(forKey: "voiceDropFillers") }
+        set { d.set(newValue, forKey: "voiceDropFillers") }
+    }
     /// Регистр первой буквы по тексту перед курсором (`VoiceOutputCase.matchedToContext`).
     /// Включено по умолчанию (просьба автора 25.10.2026); при «Не начинать с заглавной» не действует.
     var voiceContextCase: Bool {

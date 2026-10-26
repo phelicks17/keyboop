@@ -873,8 +873,9 @@ final class VoiceController {
         // «кейбуп» уходил бы в историю, в статистику и в «скопировать последнюю диктовку» в сыром
         // виде, и человек, который взял текст из истории, всё равно правил бы его руками — то есть
         // ровно то, ради чего словарь и заведён (задача 126).
-        let clean = VoiceDictionary.shared.apply(
-            WhisperGhosts.clean(text).trimmingCharacters(in: .whitespacesAndNewlines))
+        // Звуки-заминки («э-э», «ммм») убираем здесь же, до истории: в ней они такой же мусор.
+        let ghostless = WhisperGhosts.clean(text).trimmingCharacters(in: .whitespacesAndNewlines)
+        let clean = VoiceDictionary.shared.apply(settings.voiceDropFillers ? VoiceFillers.strip(ghostless) : ghostless)
         // Диктовку отменили по Escape, но человек попросил её всё-таки сохранять (R37). В поле не
         // пишем ничего: Escape означает «не вставляй». Кладём в историю и говорим об этом тостом,
         // иначе сохранение выглядело бы как то, что программа проигнорировала отмену.
