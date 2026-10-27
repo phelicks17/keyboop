@@ -434,6 +434,59 @@ codesign -f -s "$SIGN_ID" $CS_OPTS "$APP/Contents/Frameworks/libonnxruntime.dyli
   && echo "  libonnxruntime.dylib встроен и подписан ($SIGN_ID)" \
   || { echo "  ⚠️  ОШИБКА подписи libonnxruntime.dylib"; [ "${KEYBOOP_RELEASE:-}" = "1" ] && exit 1; }
 
+# Подсказки продолжения (docs/inline-prediction.md) — НЕОБЯЗАТЕЛЬНЫЙ блок: нет llama.cpp — собираем
+# приложение без движка, функция в настройках так и скажет. llama.cpp НЕ линкуется в бинарь: в нём уже
+# статически сидит ggml из whisper.cpp другой версии. Вместо этого шим Native/llm/kb_llm.c линкуется
+# со статикой llama.cpp в отдельную dylib, наружу которой видны только kb_llm_* (exports.txt), а все
+# ggml_*/llama_* внутри неё скрыты. Swift грузит её dlopen'ом (LLMRuntime). Таргет 14.0 по той же
+# причине, что у whisper (MTLResidencySetDescriptor), Metal-шейдеры встроены (EMBED_LIBRARY).
+LLAMA="vendor/llama.cpp"
+LLAMA_ARM="$LLAMA/build-macos14"
+LLAMA_X86="$LLAMA/build-x86"
+build_llm_dylib() {   # $1 = каталог сборки llama.cpp, $2 = clang target, $3 = выходной файл
+  local libs=(-lllama -lggml -lggml-cpu -lggml-base) dirs=(-L "$1/src" -L "$1/ggml/src") fw=(-framework Foundation -framework Accelerate)
+  if [ -f "$1/ggml/src/ggml-metal/libggml-metal.a" ]; then
+    libs+=(-lggml-metal); dirs+=(-L "$1/ggml/src/ggml-metal"); fw+=(-framework Metal -framework MetalKit)
+  fi
+  if [ -f "$1/ggml/src/ggml-blas/libggml-blas.a" ]; then
+    libs+=(-lggml-blas); dirs+=(-L "$1/ggml/src/ggml-blas")
+  fi
+  clang -dynamiclib -O2 -target "$2" -fvisibility=hidden \
+    -I "$LLAMA/include" -I "$LLAMA/ggml/include" Native/llm/kb_llm.c \
+    "${dirs[@]}" "${libs[@]}" -lc++ "${fw[@]}" \
+    -Wl,-exported_symbols_list,Native/llm/exports.txt \
+    -install_name @rpath/libkeyboop_llm.dylib -o "$3"
+}
+if [ -f "$LLAMA_ARM/src/libllama.a" ]; then
+  LLM_OUT="$APP/Contents/Frameworks/libkeyboop_llm.dylib"
+  build_llm_dylib "$LLAMA_ARM" arm64-apple-macos14.0 "$LLM_OUT.arm64"
+  if [ "${KEYBOOP_UNIVERSAL:-}" = "1" ] && [ -f "$LLAMA_X86/src/libllama.a" ]; then
+    build_llm_dylib "$LLAMA_X86" x86_64-apple-macos13.0 "$LLM_OUT.x86"
+    lipo -create "$LLM_OUT.arm64" "$LLM_OUT.x86" -output "$LLM_OUT"
+    rm -f "$LLM_OUT.arm64" "$LLM_OUT.x86"
+  else
+    if [ "${KEYBOOP_UNIVERSAL:-}" = "1" ]; then
+      echo "  ⚠️  нет x86-сборки llama.cpp: на Intel подсказок не будет (движок только arm64)"
+    fi
+    mv "$LLM_OUT.arm64" "$LLM_OUT"
+  fi
+  # Проверка изоляции: наружу должно торчать ровно четыре символа kb_llm_*, и ни одного ggml_*.
+  if nm -gU "$LLM_OUT" | grep -E '^[0-9a-f]+ [A-Za-z] ' | grep -vq " _kb_llm_"; then
+    echo "  ⚠️  ОШИБКА: libkeyboop_llm.dylib экспортирует лишнее — ggml столкнётся с whisper"; exit 1
+  fi
+  codesign -f -s "$SIGN_ID" $CS_OPTS "$LLM_OUT" \
+    && echo "  libkeyboop_llm.dylib встроен и подписан ($(lipo -archs "$LLM_OUT"))" \
+    || { echo "  ⚠️  ОШИБКА подписи libkeyboop_llm.dylib"; [ "${KEYBOOP_RELEASE:-}" = "1" ] && exit 1; }
+else
+  echo "  (нет llama.cpp — подсказки продолжения в эту сборку не входят. Чтобы включить, один раз:"
+  echo "    git clone https://github.com/ggml-org/llama.cpp $LLAMA && git -C $LLAMA checkout b11600"
+  echo "    cmake -S $LLAMA -B $LLAMA_ARM -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF \\"
+  echo "      -DGGML_METAL_EMBED_LIBRARY=ON -DGGML_OPENMP=OFF -DLLAMA_BUILD_COMMON=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_TOOLS=OFF \\"
+  echo "      -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=OFF -DLLAMA_BUILD_APP=OFF && cmake --build $LLAMA_ARM -j"
+  echo "    Intel-срез (для KEYBOOP_UNIVERSAL=1): то же с -B $LLAMA_X86 -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \\"
+  echo "      -DGGML_METAL=OFF -DGGML_NATIVE=OFF -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON)"
+fi
+
 # Подписываем само приложение (после вложенных — печатает бандл целиком).
 if codesign --force --sign "$SIGN_ID" --entitlements "$ENT" $CS_OPTS "$APP" 2>/dev/null; then
   echo "  подпись: «$SIGN_ID» + entitlements + Sparkle"
