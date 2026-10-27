@@ -63,7 +63,7 @@ enum SettingsSection: Int, CaseIterable {
     /// функции, потом система, потом «про нас». Голосовой набор стоит третьим, а не пятым: это
     /// второй двигатель приложения и первая тема по числу отзывов (21 из 73 содержательных).
     /// `rawValue` нигде не сохраняется, поэтому переставлять здесь безопасно.
-    case switching, exceptions, ambiguous, voice, snippets, translate, general, updates, privacy, about
+    case switching, exceptions, ambiguous, voice, predict, snippets, translate, general, updates, privacy, about
 
     /// Что показываем в левом меню. «Спорные слова» — подстраница «Исключений» (кнопка внутри):
     /// в меню это был бы одиннадцатый пункт ради списка, который открывают раз в жизни.
@@ -84,6 +84,7 @@ enum SettingsSection: Int, CaseIterable {
         case .snippets:   return "sec.snippets"
         case .translate:  return "sec.translate"
         case .voice:      return "sec.voice"
+        case .predict:    return "sec.predict"
         case .general:    return "sec.general"
         case .updates:    return "sec.updates"
         case .privacy:    return "sec.privacy"
@@ -98,6 +99,7 @@ enum SettingsSection: Int, CaseIterable {
         case .snippets:   return "wand.and.stars"
         case .translate:  return "character.bubble"
         case .voice:      return "mic"
+        case .predict:    return "character.cursor.ibeam"
         case .general:    return "gearshape"
         case .updates:    return "arrow.triangle.2.circlepath"
         case .privacy:    return "lock.shield"
@@ -1345,6 +1347,7 @@ final class DetailVC: NSViewController {
         case .snippets:   built = buildSnippets()
         case .translate:  built = buildTranslate()
         case .voice:      built = buildVoice()
+        case .predict:    built = PredictionSettingsView.make()   // docs/inline-prediction.md
         case .general:    built = buildGeneral()
         case .updates:    built = buildUpdates()
         case .privacy:    built = buildPrivacy()

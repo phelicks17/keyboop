@@ -95,6 +95,11 @@ enum Permissions {
         open("x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")
     }
 
+    /// «Запись экрана» — нужна только подсказкам продолжения с включённым текстом с экрана.
+    static func openScreenRecordingSettings() {
+        open("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
+    }
+
     /// Объекты входа (Login Items) — чтобы убрать чужой автозапуск (напр. Punto Switcher).
     /// Отключить автозапуск ДРУГОГО приложения программно нельзя — ведём пользователя в панель.
     static func openLoginItemsSettings() {

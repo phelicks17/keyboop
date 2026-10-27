@@ -32,7 +32,8 @@ enum L10n {
     }
 
     static func t(_ key: String) -> String {
-        strings[key]?[current] ?? strings[key]?[.en] ?? key
+        let entry = strings[key] ?? predictionStrings[key]
+        return entry?[current] ?? entry?[.en] ?? key
     }
 
     /// Локализация единиц размера модели: каталог хранит EN («142 MB», «1.5 GB»),
@@ -1528,5 +1529,51 @@ enum L10n {
         "about.nuanceTitle":[.ru: "Нюансы", .en: "Good to know"],
         "about.nuance":   [.ru: "Работает в фоне (значок у часов). При исправлении слов не трогает буфер обмена — печатает символы напрямую. Из твоего ввода и голоса наружу не уходит ничего; в сеть — только за моделями и обновлениями. Нужен доступ к «Универсальному доступу» (Accessibility), чтобы видеть и исправлять ввод.",
                            .en: "Runs in the background (menu-bar icon). Doesn’t touch the clipboard when fixing words — it types characters directly. Nothing from your input or voice ever leaves the Mac; the network is used only for models and updates. Needs Accessibility access to see and fix input."]
+    ]
+}
+
+// MARK: - Подсказки продолжения (docs/inline-prediction.md)
+
+// Отдельным словарём в конце файла, а не внутри `strings`: так правки параллельных веток в общем
+// словаре не встречаются с этими строками. Проверка дублей в build-app.sh видит оба словаря.
+extension L10n {
+    fileprivate static let predictionStrings: [String: [Lang: String]] = [
+        "sec.predict":        [.ru: "Подсказки", .en: "Suggestions"],
+        "pred.title":         [.ru: "Подсказки продолжения", .en: "Text suggestions"],
+        "pred.body":          [.ru: "Пока ты печатаешь, Keyboop предлагает, как продолжить фразу: серый текст рядом с кареткой, клавиша принятия вставляет его. Считает локальная модель на этом Mac, текст никуда не уходит.",
+                               .en: "As you type, Keyboop suggests how the sentence goes on: grey text next to the caret, and the accept key inserts it. A local model on this Mac does the work, and your text goes nowhere."],
+        "pred.enable":        [.ru: "Подсказывать продолжение", .en: "Suggest continuations"],
+        "pred.enableSub":     [.ru: "Выключено по умолчанию. Пока функция включена, модель занимает около 4,5 ГБ памяти.",
+                               .en: "Off by default. While this is on, the model takes about 4.5 GB of memory."],
+        "pred.model":         [.ru: "Модель Gemma 4 E2B", .en: "Gemma 4 E2B model"],
+        "pred.modelSub":      [.ru: "%@, скачивается один раз с Hugging Face и сверяется по SHA-256", .en: "%@, downloaded once from Hugging Face and checked by SHA-256"],
+        "pred.download":      [.ru: "Скачать", .en: "Download"],
+        "pred.delete":        [.ru: "Удалить", .en: "Delete"],
+        "pred.cancel":        [.ru: "Отменить", .en: "Cancel"],
+        "pred.downloading":   [.ru: "Скачивается… %d%%", .en: "Downloading… %d%%"],
+        "pred.downloadFailed":[.ru: "Не скачалось или файл не прошёл проверку. Попробуй ещё раз.", .en: "Download failed or the file didn’t pass the check. Try again."],
+        "pred.installed":     [.ru: "Скачана", .en: "Downloaded"],
+        "pred.noEngine":      [.ru: "Движок подсказок не входит в эту сборку: она собрана без llama.cpp.", .en: "This build doesn’t include the suggestion engine: it was built without llama.cpp."],
+        "pred.acceptKey":     [.ru: "Клавиша принятия", .en: "Accept key"],
+        "pred.key.tab":       [.ru: "Tab", .en: "Tab"],
+        "pred.key.right":     [.ru: "Стрелка вправо", .en: "Right arrow"],
+        "pred.acceptSub":     [.ru: "Перехватывается, только пока подсказка видна. В остальное время клавиша работает как обычно.",
+                               .en: "Taken over only while a suggestion is visible. The rest of the time the key works as usual."],
+        "pred.dictation":     [.ru: "Учитывать последнюю диктовку", .en: "Use your last dictation"],
+        "pred.dictationSub":  [.ru: "Только если история диктовок включена и запись ещё не удалена по сроку.", .en: "Only if dictation history is on and the entry hasn’t expired."],
+        "pred.screen":        [.ru: "Учитывать текст с экрана", .en: "Use text on screen"],
+        "pred.screenSub":     [.ru: "Нужен доступ «Запись экрана». Выключено по умолчанию.", .en: "Needs Screen Recording access. Off by default."],
+        "pred.screenNote":    [.ru: "Раз в 20 секунд, пока ты печатаешь, Keyboop снимает переднее окно, распознаёт на нём текст встроенным в macOS распознаванием и сразу выбрасывает картинку. Картинка не сохраняется и никуда не отправляется, распознанный текст живёт в памяти не дольше минуты. В полях паролей и в исключённых программах снимков нет. macOS сама будет иногда переспрашивать это разрешение и показывать значок записи экрана.",
+                               .en: "Every 20 seconds while you type, Keyboop captures the front window, reads its text with macOS’s built-in recognition and throws the image away at once. The image is never saved or sent anywhere, and the recognised text stays in memory for a minute at most. No captures in password fields or excluded apps. macOS will re-ask for this permission now and then and show its screen-recording indicator."],
+        "pred.screenPerm":    [.ru: "Доступа «Запись экрана» пока нет.", .en: "Screen Recording access isn’t granted yet."],
+        "pred.screenGrant":   [.ru: "Дать доступ…", .en: "Grant access…"],
+        "pred.screenOpen":    [.ru: "Открыть настройки…", .en: "Open Settings…"],
+        "pred.excluded":      [.ru: "Без подсказок", .en: "No suggestions in"],
+        "pred.excludedSub":   [.ru: "Здесь подсказок и снимков экрана не будет. Программы, где Keyboop выключен в «Исключениях», пропускаются тоже.",
+                               .en: "No suggestions or screen captures here. Apps where Keyboop is off in Exceptions are skipped too."],
+        "pred.addApp":        [.ru: "Добавить программу…", .en: "Add app…"],
+        "pred.remove":        [.ru: "Убрать", .en: "Remove"],
+        "pred.foot":          [.ru: "Подсказок нет в полях паролей, при защищённом вводе, на паузе, во время диктовки и там, где macOS не говорит, где каретка.",
+                               .en: "No suggestions in password fields, under secure input, while paused, while dictating, or where macOS doesn’t say where the caret is."]
     ]
 }
