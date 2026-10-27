@@ -549,6 +549,12 @@ final class EventTap {
                 if s.voiceHoldMode == "toggle" { voiceKeyArmed = false } else { voiceActive = false }
                 return swallowDown(keyCode)
             }
+            // Подсказка продолжения (docs/inline-prediction.md). Клавиша принятия глотается ТОЛЬКО пока
+            // подсказка на экране; любое другое нажатие её прячет и идёт дальше своим ходом.
+            // Выключенная функция стоит одного сравнения.
+            if InlinePredictor.shared.tapKeyDown(keyCode: keyCode, mods: relevantMods(event.flags)) {
+                return swallowDown(keyCode)
+            }
             // Мгновенное переключение языка комбинацией (⌘Space/⌃Space/своя): ГЛОТАЕМ, чтобы не
             // сработало то, что висит на ней в системе (Spotlight и пр.) — иначе всплывут оба.
             // ⚠️ Гард !isEmpty обязателен: это был ЕДИНСТВЕННЫЙ наш хоткей без него (у перевода и у
