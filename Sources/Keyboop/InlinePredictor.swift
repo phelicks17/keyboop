@@ -28,7 +28,13 @@ enum PredictionSettings {
     ]
 
     static var enabled: Bool {
-        get { d.bool(forKey: enabledKey) }   // не зарегистрировано → false: ВЫКЛ по умолчанию
+        // Не зарегистрировано → false: ВЫКЛ по умолчанию. На Intel выключено всегда: движка там нет,
+        // и горячий путь тапа не должен даже взводить таймер.
+        #if arch(arm64)
+        get { d.bool(forKey: enabledKey) }
+        #else
+        get { false }
+        #endif
         set { d.set(newValue, forKey: enabledKey); changed() }
     }
     static var screenContext: Bool {

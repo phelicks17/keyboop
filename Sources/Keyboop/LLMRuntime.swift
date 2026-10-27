@@ -38,8 +38,13 @@ final class LLMRuntime {
     private var loadFailed = false
 
     /// Есть ли движок в этой сборке. Сборка без llama.cpp честно говорит об этом в настройках.
+    /// Только Apple Silicon (решение автора, 27.10.2026): Intel-срезу движка нет и не будет.
     static var isBundled: Bool {
-        FileManager.default.fileExists(atPath: libraryPath)
+        #if arch(arm64)
+        return FileManager.default.fileExists(atPath: libraryPath)
+        #else
+        return false
+        #endif
     }
     private static var libraryPath: String {
         (Bundle.main.privateFrameworksPath ?? "") + "/libkeyboop_llm.dylib"
@@ -78,12 +83,7 @@ final class LLMRuntime {
         guard !loadFailed, let lib = loadLibrary() else { return nil }
         let path = PredictionModel.path
         guard FileManager.default.fileExists(atPath: path) else { return nil }
-        // Apple Silicon: все слои в Metal. Intel: Metal-бэкенда в x86-срезе нет, считаем на CPU.
-        #if arch(arm64)
-        let gpuLayers: Int32 = -1
-        #else
-        let gpuLayers: Int32 = 0
-        #endif
+        let gpuLayers: Int32 = -1   // все слои в Metal: функция есть только на Apple Silicon
         let threads = Int32(max(2, min(8, ProcessInfo.processInfo.activeProcessorCount - 2)))
         let t0 = Date()
         handle = path.withCString { lib.open($0, Self.contextTokens, gpuLayers, threads) }

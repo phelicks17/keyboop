@@ -75,7 +75,13 @@ enum SettingsSection: Int, CaseIterable {
     /// разделов, из списка приходилось выбрасывать разделы, где после фильтра оставались одни
     /// заголовки. Теперь простой режим это ОТДЕЛЬНЫЙ корневой экран без бокового меню, а сайдбар
     /// существует только в подробном, где показывается всё.
-    static var sidebarCases: [SettingsSection] { allCases.filter { $0 != .ambiguous } }
+    static var sidebarCases: [SettingsSection] {
+        #if arch(arm64)
+        return allCases.filter { $0 != .ambiguous }
+        #else
+        return allCases.filter { $0 != .ambiguous && $0 != .predict }   // подсказки только на Apple Silicon
+        #endif
+    }
     var l10nKey: String {
         switch self {
         case .switching: return "sec.switching"

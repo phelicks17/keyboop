@@ -40,7 +40,7 @@ enum ScreenContext {
     static func refreshIfStale(pid: pid_t) {
         if let c = cached, c.pid != pid { cached = nil }
         guard !inFlight, hasPermission, Date().timeIntervalSince(lastAttempt) >= minInterval else { return }
-        guard #available(macOS 14.0, *) else { return }   // SCScreenshotManager есть с 14; Intel на 13 живёт без экрана
+        guard #available(macOS 14.0, *) else { return }   // SCScreenshotManager есть с 14 — это и пол arm64-сборки
         lastAttempt = Date()
         inFlight = true
         Task.detached(priority: .utility) {
