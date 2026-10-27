@@ -84,6 +84,7 @@ final class InlinePredictor {
     private var generation = 0
     private var suggestion: String?
     private var monitorsInstalled = false
+    private var overlayUsed = false
 
     private init() {
         NotificationCenter.default.addObserver(forName: .keyboopPredictionSettingsChanged, object: nil,
@@ -107,7 +108,7 @@ final class InlinePredictor {
     /// принятие подсказки. Выключенная функция стоит одного сравнения.
     func tapKeyDown(keyCode: Int64, mods: CGEventFlags) -> Bool {
         guard enabled else { return false }
-        if keyCode == acceptKeyCode, mods.isEmpty, let text = suggestion, GhostTextOverlay.shared.isVisible {
+        if keyCode == acceptKeyCode, mods.isEmpty, let text = suggestion, overlayUsed, GhostTextOverlay.shared.isVisible {
             accept(text)
             return true
         }
@@ -125,7 +126,9 @@ final class InlinePredictor {
         timer?.invalidate(); timer = nil
         hideTimer?.invalidate(); hideTimer = nil
         suggestion = nil
-        GhostTextOverlay.shared.hide()
+        // Панель трогаем, только если её уже показывали: первое нажатие не должно создавать окно
+        // внутри колбэка тапа.
+        if overlayUsed { GhostTextOverlay.shared.hide() }
     }
 
     private func accept(_ text: String) {
@@ -185,6 +188,7 @@ final class InlinePredictor {
             guard let self, gen == self.generation, let raw,
                   let text = PredictionPrompt.clean(raw, beforeCaret: before) else { return }
             self.suggestion = text
+            self.overlayUsed = true
             GhostTextOverlay.shared.show(text, at: caret, keyName: PredictionSettings.acceptKeyEntry.label)
             self.hideTimer = Timer.scheduledTimer(withTimeInterval: self.autoHide, repeats: false) { [weak self] _ in
                 self?.dismiss()
